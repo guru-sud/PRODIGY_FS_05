@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= profileUser.username %> - SocialApp</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; color: #fff; font-family: Arial, sans-serif; }
+        nav { background: #16213e; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        nav h1 { color: #e94560; }
+        nav a { color: #fff; text-decoration: none; margin-left: 16px; }
+        nav a:hover { color: #e94560; }
+        .container { max-width: 600px; margin: 24px auto; padding: 0 16px; }
+        .profile-card { background: #16213e; padding: 24px; border-radius: 12px; margin-bottom: 24px; text-align: center; }
+        .profile-avatar { width: 80px; height: 80px; background: #e94560; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px; }
+        .profile-name { font-size: 24px; font-weight: bold; color: #e94560; margin-bottom: 8px; }
+        .profile-bio { color: #888; margin-bottom: 16px; }
+        .profile-stats { display: flex; justify-content: center; gap: 32px; margin-bottom: 16px; }
+        .stat { text-align: center; }
+        .stat-number { font-size: 20px; font-weight: bold; color: #e94560; }
+        .stat-label { font-size: 12px; color: #888; }
+        .btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .btn-follow { background: #e94560; color: #fff; }
+        .btn-unfollow { background: #0f3460; color: #fff; }
+        .bio-form { margin-top: 16px; text-align: left; }
+        .bio-form textarea { width: 100%; padding: 10px; background: #0f3460; border: none; border-radius: 8px; color: #fff; resize: none; height: 60px; }
+        .bio-form button { margin-top: 8px; padding: 8px 20px; background: #e94560; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .post { background: #16213e; padding: 20px; border-radius: 12px; margin-bottom: 16px; }
+        .post-content { line-height: 1.6; margin-bottom: 12px; }
+        .post-image { width: 100%; border-radius: 8px; margin-bottom: 12px; }
+        .post-tags { margin-bottom: 12px; }
+        .tag { background: #0f3460; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-right: 6px; color: #e94560; }
+        .back-link { display: inline-block; margin-bottom: 16px; color: #e94560; text-decoration: none; }
+        .post-time { color: #888; font-size: 12px; margin-bottom: 8px; }
+        .like-info { color: #e94560; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>🌐 SocialApp</h1>
+        <div>
+            <a href="/">🏠 Home</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="/" class="back-link">← Back to Feed</a>
+
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-name"><%= profileUser.username %></div>
+            <div class="profile-bio"><%= profileUser.bio || 'No bio yet.' %></div>
+
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-number"><%= posts.length %></div>
+                    <div class="stat-label">Posts</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number"><%= profileUser.followers.length %></div>
+                    <div class="stat-label">Followers</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number"><%= profileUser.following.length %></div>
+                    <div class="stat-label">Following</div>
+                </div>
+            </div>
+
+            <!-- Follow/Unfollow Button -->
+            <% if (profileUser._id.toString() !== currentUser._id.toString()) { %>
+            <form method="POST" action="/follow/<%= profileUser._id %>">
+                <button type="submit" class="btn <%= isFollowing ? 'btn-unfollow' : 'btn-follow' %>">
+                    <%= isFollowing ? '✓ Unfollow' : '+ Follow' %>
+                </button>
+            </form>
+            <% } else { %>
+            <!-- Edit Bio (own profile) -->
+            <div class="bio-form">
+                <form method="POST" action="/profile/update">
+                    <textarea name="bio" placeholder="Update your bio..."><%= profileUser.bio %></textarea>
+                    <button type="submit">Update Bio</button>
+                </form>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- User Posts -->
+        <h3 style="margin-bottom:16px; color:#e94560;">📝 Posts by <%= profileUser.username %></h3>
+<!-- Activity Section - only show on own profile -->
+<% if (profileUser._id.toString() === currentUser._id.toString()) { %>
+<div style="background:#16213e; padding:20px; border-radius:12px; margin-bottom:24px;">
+    <h3 style="color:#e94560; margin-bottom:16px;">🔔 Your Activity</h3>
+
+    <% posts.forEach(post => { %>
+        <% if (post.likes.length > 0 || post.comments.length > 0) { %>
+        <div style="background:#0f3460; padding:12px; border-radius:8px; margin-bottom:12px;">
+            <p style="color:#888; font-size:12px; margin-bottom:8px;">Post: "<%= post.content.substring(0, 50) %>..."</p>
+
+            <!-- Likes -->
+            <% if (post.likes.length > 0) { %>
+            <p style="color:#e94560; margin-bottom:6px;">
+                ❤️ <strong><%= post.likes.length %></strong> people liked your post
+            </p>
+            <% } %>
+
+            <!-- Comments -->
+            <% if (post.comments.length > 0) { %>
+            <p style="color:#2ecc71; margin-bottom:6px;">💬 Comments:</p>
+            <% post.comments.forEach(comment => { %>
+            <div style="padding:6px 0; border-bottom:1px solid #1a1a2e;">
+                <span style="color:#e94560; font-size:13px;">
+                    👤 <%= comment.user ? comment.user.username : 'User' %>:
+                </span>
+                <span style="color:#ccc; font-size:13px;"> <%= comment.text %></span>
+            </div>
+            <% }) %>
+            <% } %>
+        </div>
+        <% } %>
+    <% }) %>
+
+    <% if (!posts.some(p => p.likes.length > 0 || p.comments.length > 0)) { %>
+        <p style="color:#888; text-align:center;">No activity yet on your posts!</p>
+    <% } %>
+</div>
+<% } %>
+        <% if (posts.length === 0) { %>
+            <p style="color:#888; text-align:center; padding:20px;">No posts yet!</p>
+        <% } %>
+
+        <% posts.forEach(post => { %>
+        <div class="post">
+            <div class="post-time"><%= new Date(post.createdAt).toLocaleDateString() %></div>
+            <div class="post-content"><%= post.content %></div>
+            <% if (post.image) { %>
+                <img src="<%= post.image %>" class="post-image" alt="Post image" />
+            <% } %>
+            <% if (post.tags.length > 0) { %>
+            <div class="post-tags">
+                <% post.tags.forEach(tag => { %>
+                    <span class="tag">#<%= tag %></span>
+                <% }) %>
+            </div>
+            <% } %>
+            <div class="like-info">❤️ <%= post.likes.length %> likes · 💬 <%= post.comments.length %> comments</div>
+        </div>
+        <% }) %>
+    </div>
+</body>
+</html>

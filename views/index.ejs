@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialApp</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; color: #fff; font-family: Arial, sans-serif; }
+        nav { background: #16213e; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        nav h1 { color: #e94560; }
+        nav a { color: #fff; text-decoration: none; margin-left: 16px; }
+        nav a:hover { color: #e94560; }
+        .container { max-width: 600px; margin: 24px auto; padding: 0 16px; }
+        .search-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+        .search-bar input { flex: 1; padding: 10px; background: #16213e; border: none; border-radius: 8px; color: #fff; }
+        .search-bar button { padding: 10px 20px; background: #e94560; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .search-users { background: #16213e; padding: 16px; border-radius: 12px; margin-bottom: 20px; }
+        .search-users h3 { color: #e94560; margin-bottom: 12px; }
+        .search-user-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #0f3460; }
+        .create-post { background: #16213e; padding: 20px; border-radius: 12px; margin-bottom: 24px; }
+        .create-post h3 { margin-bottom: 16px; color: #e94560; }
+        textarea { width: 100%; padding: 12px; background: #0f3460; border: none; border-radius: 8px; color: #fff; font-size: 14px; resize: none; height: 80px; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; background: #0f3460; border: none; border-radius: 8px; color: #fff; font-size: 14px; margin-top: 8px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-top: 8px; }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-like { background: #0f3460; color: #fff; }
+        .btn-delete { background: #c0392b; color: #fff; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; margin-top: 0; }
+        .post { background: #16213e; padding: 20px; border-radius: 12px; margin-bottom: 16px; }
+        .post-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .post-user { font-weight: bold; color: #e94560; text-decoration: none; }
+        .post-time { color: #888; font-size: 12px; }
+        .post-content { margin-bottom: 12px; line-height: 1.6; }
+        .post-image { width: 100%; border-radius: 8px; margin-bottom: 12px; }
+        .post-tags { margin-bottom: 12px; }
+        .tag { background: #0f3460; padding: 4px 10px; border-radius: 20px; font-size: 12px; margin-right: 6px; color: #e94560; }
+        .post-actions { display: flex; gap: 8px; align-items: center; }
+        .like-count { color: #e94560; font-weight: bold; }
+        .comments { margin-top: 16px; border-top: 1px solid #0f3460; padding-top: 12px; }
+        .comment { padding: 8px 0; border-bottom: 1px solid #0f3460; }
+        .comment-user { font-weight: bold; color: #e94560; font-size: 13px; }
+        .comment-text { font-size: 14px; color: #ccc; }
+        .comment-form { display: flex; gap: 8px; margin-top: 12px; }
+        .comment-form input { flex: 1; padding: 8px; background: #0f3460; border: none; border-radius: 8px; color: #fff; }
+        .comment-form button { padding: 8px 16px; background: #e94560; border: none; border-radius: 8px; color: #fff; cursor: pointer; }
+        .empty { text-align: center; color: #888; padding: 40px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>🌐 SocialApp</h1>
+        <div>
+            <a href="/profile/<%= user._id %>">👤 <%= user.username %></a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Search Bar -->
+        <form action="/search" method="GET" class="search-bar">
+            <input type="text" name="q" placeholder="Search posts or users..." value="<%= search %>" />
+            <button type="submit">🔍 Search</button>
+        </form>
+
+        <!-- Search Results - Users -->
+        <% if (typeof searchUsers !== 'undefined' && searchUsers.length > 0) { %>
+        <div class="search-users">
+            <h3>👥 Users Found</h3>
+            <% searchUsers.forEach(u => { %>
+            <div class="search-user-item">
+                <a href="/profile/<%= u._id %>" style="color:#fff; text-decoration:none;">👤 <%= u.username %></a>
+                <a href="/profile/<%= u._id %>" style="color:#e94560; font-size:12px;">View Profile →</a>
+            </div>
+            <% }) %>
+        </div>
+        <% } %>
+
+        <!-- Create Post -->
+        <div class="create-post">
+            <h3>✏️ Create Post</h3>
+            <form method="POST" action="/posts" enctype="multipart/form-data">
+                <textarea name="content" placeholder="What's on your mind?" required></textarea>
+                <input type="text" name="tags" placeholder="Tags (comma separated)" />
+                <input type="file" name="image" accept="image/*" />
+                <button type="submit" class="btn btn-primary">Post</button>
+            </form>
+        </div>
+
+        <!-- Posts Feed -->
+        <% if (posts.length === 0) { %>
+            <div class="empty">No posts found 🚀</div>
+        <% } %>
+
+        <% posts.forEach(post => { %>
+        <div class="post">
+            <div class="post-header">
+                <a href="/profile/<%= post.user._id %>" class="post-user">👤 <%= post.user.username %></a>
+                <span class="post-time"><%= new Date(post.createdAt).toLocaleDateString() %></span>
+            </div>
+            <div class="post-content"><%= post.content %></div>
+            <% if (post.image) { %>
+                <img src="<%= post.image %>" class="post-image" alt="Post image" />
+            <% } %>
+            <% if (post.tags.length > 0) { %>
+            <div class="post-tags">
+                <% post.tags.forEach(tag => { %>
+                    <span class="tag">#<%= tag %></span>
+                <% }) %>
+            </div>
+            <% } %>
+            <div class="post-actions">
+                <form method="POST" action="/posts/<%= post._id %>/like">
+                    <button type="submit" class="btn btn-like">
+                        ❤️ <span class="like-count"><%= post.likes.length %></span>
+                    </button>
+                </form>
+                <% if (post.user._id.toString() === user._id.toString()) { %>
+                <form method="POST" action="/posts/<%= post._id %>/delete">
+                    <button type="submit" class="btn btn-delete btn-sm">🗑️ Delete</button>
+                </form>
+                <% } %>
+                <a href="/post/<%= post._id %>/public" target="_blank" 
+   style="padding:10px 14px; background:#2ecc71; border-radius:8px; color:#fff; text-decoration:none; font-size:14px;">
+    🔗 Share
+</a>
+            </div>
+            <div class="comments">
+                <% post.comments.forEach(comment => { %>
+                <div class="comment">
+                    <span class="comment-user">👤 <%= comment.user ? comment.user.username : 'User' %>:</span>
+                    <span class="comment-text"> <%= comment.text %></span>
+                </div>
+                <% }) %>
+                <form method="POST" action="/posts/<%= post._id %>/comment" class="comment-form">
+                    <input type="text" name="text" placeholder="Add a comment..." required />
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+        <% }) %>
+    </div>
+</body>
+</html>
